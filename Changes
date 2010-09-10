@@ -1,0 +1,5 @@
+Revision history for Perl extension Queue::Mmap.
+
+0.01  Wed Sep  8 09:20:54 2010
+	- original version; created by h2xs 1.23 with options
+
