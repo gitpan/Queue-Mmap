@@ -2,7 +2,7 @@ Changes
 Makefile.PL
 MANIFEST
 ppport.h
-Queue.xs
+Mmap.xs
 README
 t/Queue-Mmap.t
 lib/Queue/Mmap.pm
