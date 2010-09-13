@@ -167,6 +167,38 @@ int pop_queue(struct object* obj,char** value,int* len){
 	unlock_queue(obj);
 	return 1;
 }
+SV* pop_queue_2(struct object* obj){
+	int cur,top,first,size,len;
+	SV* value;
+	lock_queue(obj);
+	cur = obj->q->bottom;
+	first = top = obj->q->top;
+	if(cur == top){
+		unlock_queue(obj);
+		return 0;
+	}
+	len = 0;
+	do {
+		if(++top >= obj->que_len){
+			top = 0;
+		}
+		len += obj_list(obj,top)->len;
+	} while(! obj_list(obj,top)->last);
+	value = newSVpvn("",0);
+	SvGROW(value,len);
+	top = first;
+	first = 0;
+	do {
+		if(++top >= obj->que_len){
+			top = 0;
+		}
+		size = obj_list(obj,top)->len;
+		sv_catpvn(value, obj_list(obj,top)->data, (STRLEN)size);
+	} while((first += size) != len);
+	obj->q->top = top;
+	unlock_queue(obj);
+	return value;
+}
 void unlock_queue(struct object* obj){
 	struct flock lock;
 	

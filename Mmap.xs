@@ -75,6 +75,36 @@ CODE:
 OUTPUT:
 	RETVAL
 
+SV *
+queue_pop_2(que)
+	SV*  que
+INIT:
+	struct object * obj;
+	SV* value;
+
+	if (!SvROK(que)) {
+	  croak("Object not reference");
+	  XSRETURN_UNDEF;
+	}
+	que = SvRV(que);
+	if (!SvIOKp(que)) {
+	  croak("Object not initiliased correctly");
+	  XSRETURN_UNDEF;
+	}
+	obj = INT2PTR(struct object*, SvIV(que));
+	if (!obj) {
+	  croak("Object not created correctly");
+	  XSRETURN_UNDEF;
+	}
+CODE:
+	if((value = pop_queue_2(obj))){
+	  RETVAL = value;
+	}else{
+		XSRETURN_UNDEF;
+	}
+OUTPUT:
+	RETVAL
+
 int
 queue_push(que,value)
 	SV * que;
@@ -137,7 +167,7 @@ CODE:
 	free_queue(obj);
 
 void
-queue_pos(que)
+queue_stat(que)
 	SV*  que
 INIT:
 	struct object * obj;
@@ -159,6 +189,8 @@ INIT:
 PPCODE:
 	XPUSHs(sv_2mortal(newSVnv(obj->q->top)));
 	XPUSHs(sv_2mortal(newSVnv(obj->q->bottom)));
+	XPUSHs(sv_2mortal(newSVnv(obj->que_len)));
+	XPUSHs(sv_2mortal(newSVnv(obj->rec_len)));
 
 int
 queue_len(que)

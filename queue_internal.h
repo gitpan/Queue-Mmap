@@ -1,6 +1,12 @@
 #ifndef queue_internal_h
 #define queue_internal_h
 
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#include "ppport.h"
+
 struct record {
 	int len;
 	int last;
@@ -37,5 +43,6 @@ void unlock_queue(struct object*);
 void push_queue(struct object*,const char*,int);
 int pop_queue(struct object*,char**,int*);
 
+SV* pop_queue_2(struct object*);
 
 #endif

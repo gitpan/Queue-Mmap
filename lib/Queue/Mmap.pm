@@ -4,7 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 require XSLoader;
 XSLoader::load('Queue::Mmap', $VERSION);
@@ -30,13 +30,17 @@ sub push {
 	my ($self,$val) = @_;
 	return $self->queue_push($val);
 }
-sub pop {
+sub pop_old {
 	my $self = shift;
 	return $self->queue_pop();
 }
+sub pop {
+	my $self = shift;
+	return $self->queue_pop_2();
+}
 sub stat {
 	my $self = shift;
-	return $self->queue_pos();
+	return $self->queue_stat();
 }
 sub length {
 	my $self = shift;
@@ -59,9 +63,9 @@ Queue::Mmap - Perl extension for shared queue over mmap-ed file
 
 	use Queue::Mmap;
 	my $q = new Queue::Mmap(
-		file=> "file.dat",
-		queue => 10,
-		length => 20,
+		file => "file.dat",
+		queue => 10, # length of queue 
+		length => 20, # length one record (if data longer record? data placed in some records)
 	);
 	unless($q->push("abcdefghijklmnopqrstuvwxyz")){
 		die "fail push";
@@ -80,8 +84,10 @@ Queue::Mmap - Shared circled queue over mmap-ed file.
 
 Usefull for multy process task queue.
 One process(es) push task message, and other process(es) pop and execute that tasks.
-Access with locking(fcntl) guaranted right order.
-If pushed data has size greater that capacity push has return undef.
+Access with locking(fcntl) guaranted right order without conflict.
+If pushed data has size greater that record len data placed in some records.
+If pushed data has size greater that capacity (record * queue) push has return undef.
+
 Tested only on linux.
 
 Length of record align for 4 bytes.
