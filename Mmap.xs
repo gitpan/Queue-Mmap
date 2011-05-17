@@ -47,9 +47,7 @@ queue_pop(que)
 	SV*  que
 INIT:
 	struct object * obj;
-
-	char* value;
-	int len;
+	SV* value;
 
 	if (!SvROK(que)) {
 	  croak("Object not reference");
@@ -66,9 +64,8 @@ INIT:
 	  XSRETURN_UNDEF;
 	}
 CODE:
-	if(pop_queue(obj,&value,&len)){
-		RETVAL = newSVpv(value,len);
-		free(value);
+	if((value = pop_queue(obj))){
+	  RETVAL = value;
 	}else{
 		XSRETURN_UNDEF;
 	}
@@ -76,7 +73,7 @@ OUTPUT:
 	RETVAL
 
 SV *
-queue_pop_2(que)
+queue_top(que)
 	SV*  que
 INIT:
 	struct object * obj;
@@ -97,7 +94,7 @@ INIT:
 	  XSRETURN_UNDEF;
 	}
 CODE:
-	if((value = pop_queue_2(obj))){
+	if((value = top_queue(obj))){
 	  RETVAL = value;
 	}else{
 		XSRETURN_UNDEF;

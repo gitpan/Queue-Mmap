@@ -31,18 +31,21 @@ struct object {
 	int fd;
 };
 
-struct record* obj_list(struct object*,int);
-struct object* new_queue();
-int init_file(const char*,int,int*);
-void free_queue(struct object*);
-void init_queue(struct object*);
-void calc_queue(struct object*,const char*,int,int);
+#define obj_list(obj,i) \
+((struct record*)(obj->q->list + (sizeof(struct record) + obj->rec_len)*i))
 
-int lock_queue(struct object*);
+
+//struct record* obj_list(struct object*,int);
+struct object* new_queue();
+int    init_file(const char*,int,int*);
+void   free_queue(struct object*);
+void   init_queue(struct object*);
+void   calc_queue(struct object*,const char*,int,int);
+
+int  lock_queue(struct object*);
 void unlock_queue(struct object*);
 void push_queue(struct object*,const char*,int);
-int pop_queue(struct object*,char**,int*);
-
-SV* pop_queue_2(struct object*);
+SV*  pop_queue(struct object*);
+SV*  top_queue(struct object*);
 
 #endif

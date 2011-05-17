@@ -4,7 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 require XSLoader;
 XSLoader::load('Queue::Mmap', $VERSION);
@@ -30,13 +30,13 @@ sub push {
 	my ($self,$val) = @_;
 	return $self->queue_push($val);
 }
-sub pop_old {
+sub pop {
 	my $self = shift;
 	return $self->queue_pop();
 }
-sub pop {
+sub top {
 	my $self = shift;
-	return $self->queue_pop_2();
+	return $self->queue_top();
 }
 sub stat {
 	my $self = shift;
@@ -65,7 +65,7 @@ Queue::Mmap - Perl extension for shared queue over mmap-ed file
 	my $q = new Queue::Mmap(
 		file => "file.dat",
 		queue => 10, # length of queue 
-		length => 20, # length one record (if data longer record? data placed in some records)
+		length => 20, # length one record (if data longer record, data placed in some records)
 	);
 	unless($q->push("abcdefghijklmnopqrstuvwxyz")){
 		die "fail push";
@@ -80,7 +80,7 @@ Queue::Mmap - Perl extension for shared queue over mmap-ed file
 
 =head1 DESCRIPTION
 
-Queue::Mmap - Shared circled queue over mmap-ed file.
+Queue::Mmap - Shared circle-queue over mmap-ed file.
 
 Usefull for multy process task queue.
 One process(es) push task message, and other process(es) pop and execute that tasks.
