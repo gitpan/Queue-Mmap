@@ -4,7 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 require XSLoader;
 XSLoader::load('Queue::Mmap', $VERSION);
@@ -37,6 +37,10 @@ sub pop {
 sub top {
 	my $self = shift;
 	return $self->queue_top();
+}
+sub drop {
+	my $self = shift;
+	return $self->queue_drop();
 }
 sub stat {
 	my $self = shift;
@@ -72,7 +76,8 @@ Queue::Mmap - Perl extension for shared queue over mmap-ed file
 	}
 
 	print "length of queue is ",$q->length,"\n";
-
+	
+	my $top = $q->top;
 	while(defined(my $v = $q->pop)){
 		print $v,"\n";
 	}
@@ -88,10 +93,53 @@ Access with locking(fcntl) guaranted right order without conflict.
 If pushed data has size greater that record len data placed in some records.
 If pushed data has size greater that capacity (record * queue) push has return undef.
 
-Tested only on linux.
+=item new %params
+
+Create new queue object
+
+
+=item push $string
+
+push $string into queue with block
+return false on failure
+
+=item pop
+
+poped top value from queue with block
+return C<undef> on empty queue
+
+=item top
+
+copy top value from queue without block
+return C<undef> on empty queue
+
+
+=item drop
+
+drop top value from queue with block
+return C<undef> on failfure
+
+=item length
+
+return number of records in queue
+
+=item stat
+
+return array
+        top - index top records
+        bottom - index last records
+        que_len - capacity of queue
+        rec_len - lenth one record
+
+=item aligments
 
 Length of record align for 4 bytes.
 Length of file align for 4k.
+
+=head1 TODO
+
+Tested only on linux.
+
 
 =head2 EXPORT
 

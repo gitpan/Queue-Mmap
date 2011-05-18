@@ -13,6 +13,9 @@
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
+#define obj_list(obj,i) \
+	((struct record*)(obj->q->list + (sizeof(struct record) + obj->rec_len)*i))
+
 struct object* new_queue(){
 	struct object* obj = (struct object*)malloc(sizeof(struct object));
 	obj->file = 0;
@@ -166,6 +169,24 @@ SV* pop_queue(struct object* obj){
 	unlock_queue(obj);
 	return value;
 }
+void drop_queue(struct object* obj){
+	int cur,top;
+
+	lock_queue(obj);
+	cur = obj->q->bottom;
+	top = obj->q->top;
+	if(cur == top){
+		unlock_queue(obj);
+		return;
+	}
+	do {
+		if(++top >= obj->que_len){
+			top = 0;
+		}
+	} while(! obj_list(obj,top)->last);
+	obj->q->top = top;
+	unlock_queue(obj);
+}
 SV* top_queue(struct object* obj){
 	int cur,top,first,size,len;
 	SV* value;
@@ -258,6 +279,3 @@ int lock_queue(struct object* obj){
 	
 	return obj->locked = 1;
 }
-//struct record* obj_list(struct object* obj,int i) {
-//	return (struct record*)(obj->q->list + (sizeof(struct record) + obj->rec_len)*i);
-//}

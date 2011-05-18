@@ -101,6 +101,33 @@ CODE:
 	}
 OUTPUT:
 	RETVAL
+	
+int
+queue_drop(que)
+	SV*  que
+INIT:
+	struct object * obj;
+	SV* value;
+
+	if (!SvROK(que)) {
+	  croak("Object not reference");
+	  XSRETURN_UNDEF;
+	}
+	que = SvRV(que);
+	if (!SvIOKp(que)) {
+	  croak("Object not initiliased correctly");
+	  XSRETURN_UNDEF;
+	}
+	obj = INT2PTR(struct object*, SvIV(que));
+	if (!obj) {
+	  croak("Object not created correctly");
+	  XSRETURN_UNDEF;
+	}
+CODE:
+	drop_queue(obj);
+	RETVAL = 1;
+OUTPUT:
+	RETVAL
 
 int
 queue_push(que,value)
@@ -214,9 +241,9 @@ CODE:
 	t = obj->q->top;
 	b = obj->q->bottom;
 	if(t<=b){
-		RETVAL = b - t;
+	  RETVAL = b - t;
 	}else{
-		RETVAL = obj->que_len + b - t;
+	  RETVAL = obj->que_len + b - t;
 	}
 OUTPUT:
 	RETVAL
