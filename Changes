@@ -11,3 +11,6 @@ Revision history for Perl extension Queue::Mmap.
     - added new methods
 	- impruved perfomance
 	- documentation
+
+0.09  Wed May  26 10:20:00 2011
+    - set file mode if any

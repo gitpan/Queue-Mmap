@@ -4,7 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 require XSLoader;
 XSLoader::load('Queue::Mmap', $VERSION);
@@ -24,7 +24,11 @@ sub new {
 	}
 	$p{queue} ||= 100;
 	$p{length} ||= 100;
-	return bless queue_new(@p{'file','queue','length'}),$class;
+	my $self = bless queue_new(@p{'file','queue','length'}),$class;
+	if($p{mode}){
+		chmod $p{mode},$p{file};
+	}
+	return $self;
 }
 sub push {
 	my ($self,$val) = @_;
