@@ -1,9 +1,5 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl Queue-Mmap.t'
 
-#########################
-
-use Test::More tests => 72;
+use Test::More tests => 71;
 #use Test::More 'no_plan';
 BEGIN { use_ok('Queue::Mmap') };
 
@@ -110,7 +106,7 @@ is $t,8, "top";
 is $b,1, "bottom";
 is $q->length,3,"length";
 
-ok $q->drop,"drop";
+$q->drop;
 ($t,$b) = $q->stat;
 is $t,0, "top";
 is $b,1, "bottom";

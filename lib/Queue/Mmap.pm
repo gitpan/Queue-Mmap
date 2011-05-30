@@ -1,10 +1,8 @@
 package Queue::Mmap;
-
-use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.09';
+our $VERSION = '0.11';
 
 require XSLoader;
 XSLoader::load('Queue::Mmap', $VERSION);
@@ -24,39 +22,12 @@ sub new {
 	}
 	$p{queue} ||= 100;
 	$p{length} ||= 100;
-	my $self = bless queue_new(@p{'file','queue','length'}),$class;
+	my $self = $class->create(@p{'file','queue','length'});
+
 	if($p{mode}){
 		chmod $p{mode},$p{file};
 	}
 	return $self;
-}
-sub push {
-	my ($self,$val) = @_;
-	return $self->queue_push($val);
-}
-sub pop {
-	my $self = shift;
-	return $self->queue_pop();
-}
-sub top {
-	my $self = shift;
-	return $self->queue_top();
-}
-sub drop {
-	my $self = shift;
-	return $self->queue_drop();
-}
-sub stat {
-	my $self = shift;
-	return $self->queue_stat();
-}
-sub length {
-	my $self = shift;
-	return $self->queue_len();
-}
-sub DESTROY {
-	my $self = shift;
-	$self->queue_free;
 }
 
 1;
@@ -74,11 +45,17 @@ Queue::Mmap - Perl extension for shared queue over mmap-ed file
 		file => "file.dat",
 		queue => 10, # length of queue 
 		length => 20, # length one record (if data longer record, data placed in some records)
+		mod => 0666, # make mode for file
 	);
 	unless($q->push("abcdefghijklmnopqrstuvwxyz")){
 		die "fail push";
 	}
+	my $w = $q->push("abcdefghijk");
+	printf "%.6f\n",$w;
 
+	my ($t,$l) = $q->push("abcdefghijk");
+	printf "total = %.6f, wait lock %.6f\n",$t,$l;
+	
 	print "length of queue is ",$q->length,"\n";
 	
 	my $top = $q->top;
@@ -101,35 +78,41 @@ If pushed data has size greater that capacity (record * queue) push has return u
 
 Create new queue object
 
+	my $q = new Queue::Mmap(
+		file => "file.dat",
+		queue => 10, # length of queue 
+		length => 20, # length one record (if data longer record, data placed in some records)
+		mod => 0666, # make mode for file
+	);
 
 =item push $string
 
-push $string into queue with block
-return false on failure
+	push $string into queue with block
+	return false on failure
+	return ($time_spend,$time_wait_lock) in array context
+	return $time_spend in scalar context
 
 =item pop
 
-poped top value from queue with block
-return C<undef> on empty queue
+	poped top value from queue with block
+	return C<undef> on empty queue
 
 =item top
 
-copy top value from queue without block
-return C<undef> on empty queue
-
+	copy top value from queue without block
+	return C<undef> on empty queue
 
 =item drop
 
-drop top value from queue with block
-return C<undef> on failfure
+	drop top value from queue with block
 
 =item length
 
-return number of records in queue
+	return number of records in queue
 
 =item stat
 
-return array
+	return array
         top - index top records
         bottom - index last records
         que_len - capacity of queue

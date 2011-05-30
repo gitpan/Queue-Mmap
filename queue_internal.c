@@ -10,6 +10,13 @@
 
 #include "queue_internal.h"
 
+#include <sys/time.h>
+struct timeval global_tv;
+#define NOW \
+	(gettimeofday(&global_tv,0),(((double)global_tv.tv_sec) + ((double)global_tv.tv_usec)/1000000.0))
+
+
+
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
@@ -100,7 +107,10 @@ int init_file (const char* file, int size,int* ni){
 }
 void push_queue(struct object* obj,const char* value,int len){
 	int cur, top, size, off = 0, first = 1, over = 0;
+	double r0,r1,r2;
+	r0 = NOW;
 	lock_queue(obj);
+	r1 = NOW;
 	cur = obj->q->bottom;
 	top = obj->q->top;
 	do {
@@ -136,6 +146,9 @@ void push_queue(struct object* obj,const char* value,int len){
 	obj->q->bottom = cur;
 	obj->q->top = top;
 	unlock_queue(obj);
+	r2 = NOW;
+	obj->wait_lock = r1-r0;
+	obj->wait_push = r2-r0;
 }
 SV* pop_queue(struct object* obj){
 	int cur,top,first,size,len;

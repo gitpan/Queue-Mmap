@@ -29,6 +29,8 @@ struct object {
 	struct queue *q;
 	int locked;
 	int fd;
+	double wait_lock;
+	double wait_push;
 };
 
 struct object* new_queue();

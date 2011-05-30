@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Queue-Mmap
-version:            0.09
+version:            0.11
 abstract:           Perl extension for shared queue over mmap-ed file
 author:
     - Ildar Efremov <iefremov@2reallife.com>

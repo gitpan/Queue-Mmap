@@ -8,242 +8,114 @@
 MODULE = Queue::Mmap		PACKAGE = Queue::Mmap
 
 SV *
-queue_new(fn,q,r)
-	SV *fn
-	int q
-	int r
-  INIT:
+create(classname,filename,que_len,rec_len)
+	SV *classname
+	SV *filename
+	SV* que_len
+	SV* rec_len
+INIT:
 	struct object * obj;
-	SV * obj_pnt, * ret;
-	void *strp;
-	int strl;
-	STRLEN strlo;
-	char* tmp;
-  CODE:
-	strp = (void *)SvPV(fn, strlo);
-	strl = (int)strlo;
-	tmp =(char*)malloc(strl+1);
-	memcpy(tmp,strp,strl);
-	tmp[strl] = 0;
-
+CODE:
 	obj = new_queue();
-	calc_queue(obj,tmp,q,r);
+	calc_queue(obj,SvPV_nolen(filename),SvIV(que_len),SvIV(rec_len));
 	init_queue(obj);
 	
-	free(tmp);
-
-	/* Create integer which is pointer to cache object */
-	obj_pnt = newSViv(PTR2IV(obj));
-
-	/* Create reference to integer value. This will be the object */
-	ret = newRV_noinc((SV *)obj_pnt);
-
-	RETVAL = ret;
-  OUTPUT:
+	RETVAL = sv_bless(newRV_noinc(newSViv(PTR2IV(obj))), gv_stashsv(classname, 0));
+OUTPUT:
 	RETVAL
 
-SV *
-queue_pop(que)
-	SV*  que
+SV*
+pop(self)
+	SV* self
 INIT:
 	struct object * obj;
-	SV* value;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 CODE:
-	if((value = pop_queue(obj))){
-	  RETVAL = value;
-	}else{
+	if(!(RETVAL = pop_queue(obj))){
 		XSRETURN_UNDEF;
 	}
 OUTPUT:
 	RETVAL
 
-SV *
-queue_top(que)
-	SV*  que
+SV*
+top(self)
+	SV* self
 INIT:
 	struct object * obj;
-	SV* value;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 CODE:
-	if((value = top_queue(obj))){
-	  RETVAL = value;
-	}else{
+	if(!(RETVAL = top_queue(obj))){
 		XSRETURN_UNDEF;
 	}
 OUTPUT:
 	RETVAL
 	
-int
-queue_drop(que)
-	SV*  que
+void
+drop(self)
+	SV* self
 INIT:
 	struct object * obj;
-	SV* value;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 CODE:
 	drop_queue(obj);
-	RETVAL = 1;
-OUTPUT:
-	RETVAL
 
-int
-queue_push(que,value)
-	SV * que;
+void
+push(self,value)
+	SV * self;
 	SV * value;
-  INIT:
+INIT:
 	struct object * obj;
 	void *strp;
 	int strl;
 	STRLEN strlo;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
-CODE:
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 	strp = (void *)SvPV(value, strlo);
 	strl = (int)strlo;
-	
+PPCODE:
 	if(strl > obj->rec_len * (obj->que_len - 1)){
-	  XSRETURN_UNDEF;
+		XSRETURN_UNDEF;
 	}
-
 	push_queue(obj,strp,strl);
-	RETVAL = 1;
-OUTPUT:
-	RETVAL
-
+	XPUSHs(sv_2mortal(newSVnv(obj->wait_push)));
+	if(GIMME_V == G_ARRAY){
+		XPUSHs(sv_2mortal(newSVnv(obj->wait_lock)));
+	}
 
 void
-queue_free(que)
-	SV*  que
+DESTROY(self)
+	SV* self
 INIT:
 	struct object * obj;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 CODE:
 	free_queue(obj);
 
 void
-queue_stat(que)
-	SV*  que
+stat(self)
+	SV* self
 INIT:
 	struct object * obj;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 PPCODE:
-	XPUSHs(sv_2mortal(newSVnv(obj->q->top)));
-	XPUSHs(sv_2mortal(newSVnv(obj->q->bottom)));
-	XPUSHs(sv_2mortal(newSVnv(obj->que_len)));
-	XPUSHs(sv_2mortal(newSVnv(obj->rec_len)));
+	XPUSHs(sv_2mortal(newSViv(obj->q->top)));
+	XPUSHs(sv_2mortal(newSViv(obj->q->bottom)));
+	XPUSHs(sv_2mortal(newSViv(obj->que_len)));
+	XPUSHs(sv_2mortal(newSViv(obj->rec_len)));
 
-int
-queue_len(que)
-	SV*  que
+SV*
+length(self)
+	SV* self
 INIT:
-	struct object * obj;
 	int t,b;
-
-	if (!SvROK(que)) {
-	  croak("Object not reference");
-	  XSRETURN_UNDEF;
-	}
-	que = SvRV(que);
-	if (!SvIOKp(que)) {
-	  croak("Object not initiliased correctly");
-	  XSRETURN_UNDEF;
-	}
-	obj = INT2PTR(struct object*, SvIV(que));
-	if (!obj) {
-	  croak("Object not created correctly");
-	  XSRETURN_UNDEF;
-	}
+	struct object * obj;
+	obj = INT2PTR(struct object*, SvIV(SvRV(self)));
 CODE:
 	t = obj->q->top;
 	b = obj->q->bottom;
-	if(t<=b){
-	  RETVAL = b - t;
+	if(t <= b){
+		RETVAL = newSViv(b - t);
 	}else{
-	  RETVAL = obj->que_len + b - t;
+		RETVAL = newSViv(obj->que_len + b - t);
 	}
 OUTPUT:
 	RETVAL
